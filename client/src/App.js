@@ -5,7 +5,8 @@ import SpotifyWebApi from 'spotify-web-api-js';
 const spotifyApi = new SpotifyWebApi();
 
 class App extends Component {
-  constructor(){
+  constructor()
+  {
     super();
     const params = this.getHashParams();
     const token = params.access_token;
@@ -20,7 +21,9 @@ class App extends Component {
 
     this.searchSong.bind(this);
   }
-  getHashParams() {
+
+  getHashParams()
+  {
     var hashParams = {};
     var e, r = /([^&;=]+)=?([^&;]*)/g,
         q = window.location.hash.substring(1);
@@ -32,8 +35,9 @@ class App extends Component {
     return hashParams;
   }
 
-  getNowPlaying(){
-    spotifyApi.getMyCurrentPlaybackState()
+  async getNowPlaying()
+  {
+    await spotifyApi.getMyCurrentPlaybackState()
       .then((response) => {
         this.setState({
           nowPlaying: { 
@@ -44,32 +48,66 @@ class App extends Component {
       })
   }
 
-  searchSong(text)
+  async getTrack(id)
+  {
+      let track = null;
+      await spotifyApi.getTrack(id).then(
+          data => {
+              track = data;
+          },
+          err => {
+
+          }
+      );
+
+      return track;
+  }
+
+  async addSongToLibrary(idArray)
+  {
+      let response = null;
+      spotifyApi.addToMySavedTracks(idArray).then(
+          data => {
+              response = data;
+          },
+          err => {
+              console.error(err);
+          }
+      );
+
+      return response
+  }
+
+  async searchSong(text)
   {
       let songs = [];
 
-      spotifyApi.searchTracks(text).then(
+      await spotifyApi.searchTracks(text).then(
           function (data) {
-              console.log('Search by ' + text, data);
               let spotifyItems = data.tracks.items;
-              console.log("HIY");
-
+              
               for(let i = 0; i < spotifyItems.length; i++)
               {
-                  console.log(spotifyItems[i]);
-                  songs.push(spotifyItems[i].name);
+                  let splittedSongUri = spotifyItems[i].uri.split(":");
+                  let songId = splittedSongUri[splittedSongUri.length - 1];
+
+                  songs.push(
+                      {
+                          fullSongText: spotifyItems[i].artists[0].name + " - " + spotifyItems[i].name,
+                          id: songId,
+                      });
               }
-              console.log(songs);
           },
           function (err) {
               console.error(err);
           }
       );
 
-      if(songs.length) this.setState({foundSongs: songs});
+      return songs;
   }
 
-  render() {
+  render()
+  {
     return (
       <div className="App">
         <a href='http://localhost:8888' > Login to Spotify </a>
@@ -87,7 +125,7 @@ class App extends Component {
         <div>
             <p>Поиск песен: </p>
             <input type={"text"} onChange={e => this.searchSong(e.target.value)}/>
-            {this.state.foundSongs.toString()}
+            <input type={"button"} value={"addToLibaryById"} onClick={() => this.addSongToLibrary(["5RSvxUfrp8Nod1e1DDlHqS"])}/>
         </div>
       </div>
     );
