@@ -51,21 +51,18 @@ class App extends Component {
     convertPlsToArray()
     {
         // 3 8 12
+        let songs = []
         let plsText = document.getElementById("textFrom").value;
-        const splitedText = plsText.split("=");
-        console.log(splitedText);
-        let counter = 3;
 
-        let songs = splitedText.filter((element, index, array) => {
-            if(index + 5 < array.length && index % 5 === 0)
-            {
-                let songName = array[counter];
-                counter += 5;
-                return songName;
-            }
-        });
+        var regexp = /[\w\А-Яа-я-.?!)(,:].* - [\wа-яА-Я-.?!)(,:].*/gi;
+        var unclear_songs = plsText.match(regexp);
 
-        console.log(songs);
+        for(let i = 0; i < unclear_songs.length; i++)
+        {
+            songs.push(unclear_songs[i].split("=")[1]);
+        }
+
+        return songs;
     }
 
     async getTrack(id)
@@ -169,7 +166,7 @@ class App extends Component {
 
     async convertSongsArrayToSpotifyLibrary()
     {
-        const songs = this.parseTxt();
+        const songs = this.convertPlsToArray();
         let nullCount = 0;
 
         let songsIds = [];
