@@ -84,7 +84,6 @@ class App extends Component {
     {
         const minAmountOfTracksToSend = 49;
         let amountOfSmallArrays = Math.ceil(idArray.length / minAmountOfTracksToSend);
-        console.log(amountOfSmallArrays);
         let currentIndex = 0;
 
         for(let i = 0; i < amountOfSmallArrays; i++)
@@ -93,9 +92,9 @@ class App extends Component {
           let arrayToSend = [];
 
           if(currentIndex + minAmountOfTracksToSend >= idArray.length)
-            arrayToSend = idArray.slice(currentIndex, idArray.length - 1);
+            arrayToSend = idArray.slice(currentIndex, idArray.length + 1);
           else
-            arrayToSend = idArray.slice(currentIndex, currentIndex + minAmountOfTracksToSend - 1);
+            arrayToSend = idArray.slice(currentIndex, currentIndex + minAmountOfTracksToSend + 1);
 
           console.log(arrayToSend);
           console.log(currentIndex,currentIndex+minAmountOfTracksToSend, idArray.length);
@@ -183,7 +182,6 @@ class App extends Component {
             songsIds.push(songId);
         }
 
-        console.log("songsIds", songsIds);
         alert(nullCount);
 
         await this.addSongToLibrary(songsIds);
