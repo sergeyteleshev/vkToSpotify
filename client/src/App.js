@@ -19,7 +19,7 @@ class App extends Component {
       foundSongs: [],
     };
 
-    this.searchSong.bind(this);
+    this.getSpotifySongId.bind(this);
   }
 
   getHashParams()
@@ -65,37 +65,74 @@ class App extends Component {
 
   async addSongToLibrary(idArray)
   {
-      let response = null;
-      spotifyApi.addToMySavedTracks(idArray).then(
-          data => {
-              response = data;
-          },
-          err => {
-              console.error(err);
-          }
-      );
+      const minAmountOfTracksToSend = 50;
+      let amountOfSmallArrays = Math.ceil(idArray.length / minAmountOfTracksToSend);
+      console.log(amountOfSmallArrays);
+      let currentIndex = 0;
 
-      return response
+      for(let i = 0; i < amountOfSmallArrays; i++)
+      {
+          let response = null;
+          let arrayToSend = [];
+
+          if(currentIndex + minAmountOfTracksToSend > idArray.length)
+            arrayToSend = idArray.splice(currentIndex, idArray.length - 1);
+          else
+            arrayToSend = idArray.splice(currentIndex, currentIndex + minAmountOfTracksToSend - 1);
+
+          await spotifyApi.addToMySavedTracks(arrayToSend).then(
+              data => {
+                  response = data;
+              },
+              err => {
+                  console.error(err);
+              }
+          );
+
+          console.log(response);
+          currentIndex += minAmountOfTracksToSend;
+      }
   }
 
-  async searchSong(text)
+  parseTxt()
+  {
+      let text = document.getElementById("textFrom").value;
+      let spitedText = text.split(",");
+      let songs = spitedText.filter((element, index, array) => {
+          if(index === 1)
+              return element;
+
+          if (index >= 3 && ((index - 2) % 2 !== 0))
+              return array[index - 3];
+      });
+
+      console.log(songs);
+
+      return songs;
+  }
+
+  async getSpotifySongId(text)
   {
       let songs = [];
 
       await spotifyApi.searchTracks(text).then(
           function (data) {
               let spotifyItems = data.tracks.items;
-              
-              for(let i = 0; i < spotifyItems.length; i++)
-              {
-                  let splittedSongUri = spotifyItems[i].uri.split(":");
-                  let songId = splittedSongUri[splittedSongUri.length - 1];
 
-                  songs.push(
-                      {
-                          fullSongText: spotifyItems[i].artists[0].name + " - " + spotifyItems[i].name,
-                          id: songId,
-                      });
+              if(spotifyItems.length !== 0)
+              {
+                  for(let i = 0; i < 1; i++)
+                  {
+                      let splittedSongUri = spotifyItems[i].uri.split(":");
+                      let songId = splittedSongUri[splittedSongUri.length - 1];
+
+                      songs.push(
+                          {
+                              fullSongText: spotifyItems[i].artists[0].name + " - " + spotifyItems[i].name,
+                              id: songId,
+                          }
+                      );
+                  }
               }
           },
           function (err) {
@@ -103,8 +140,30 @@ class App extends Component {
           }
       );
 
-      return songs;
+      console.log(songs);
+      if(songs.length > 0)
+          return songs[0].id;
+      else
+          return null
   }
+
+    async convertSongsArrayToSpotifyLibrary()
+    {
+        const songs = this.parseTxt();
+
+        let songsIds = [];
+
+        for(let i = 0; i < songs.length; i++)
+        {
+            let songId = await this.getSpotifySongId(songs[i]);
+            if (songId === null)
+                continue;
+
+            songsIds.push(songId);
+        }
+
+        this.addSongToLibrary(songsIds);
+    }
 
   render()
   {
@@ -123,10 +182,18 @@ class App extends Component {
           </button>
         }
         <div>
-            <p>Поиск песен: </p>
-            <input type={"text"} onChange={e => this.searchSong(e.target.value)}/>
             <input type={"button"} value={"addToLibaryById"} onClick={() => this.addSongToLibrary(["5RSvxUfrp8Nod1e1DDlHqS"])}/>
         </div>
+          <div>
+              From
+              <textarea id={"textFrom"}/>
+          </div>
+          <div>
+              <input type={"submit"} value={"parse text"} onClick={() => this.parseTxt()}/>
+          </div>
+          <div>
+              <input type={"submit"} value={"All songs list to Spotify"} onClick={() => this.convertSongsArrayToSpotifyLibrary()}/>
+          </div>
       </div>
     );
   }
