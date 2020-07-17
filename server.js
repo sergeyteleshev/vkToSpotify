@@ -7,6 +7,7 @@
  * https://developer.spotify.com/web-api/authorization-guide/#authorization_code_flow
  */
 
+const easyvk = require('easyvk');
 var express = require('express'); // Express web server framework
 var request = require('request'); // "Request" library
 var querystring = require('querystring');
@@ -15,6 +16,10 @@ var cookieParser = require('cookie-parser');
 var client_id = 'd269014760994b6aa9b7ff98cc7d2ca8'; // Your client id
 var client_secret = 'c700442170d4437296d38a9e1c985c81'; // Your secret
 var redirect_uri = 'http://localhost:8888/callback'; // Or Your redirect uri
+
+let vkClientId = 7541366;
+let vkSecretKey = 'wlfQcC4XL44D1QHkpCKN';
+let vkServiceAccessKey = 'b59fc92db59fc92db59fc92d6bb5ecdb5bbb59fb59fc92dea8e844885e8a30d5078b26f';
 
 /**
  * Generates a random string containing numbers and letters
@@ -149,4 +154,24 @@ app.get('api/v1/convertVkToSpotifyLibrary', (req, res) => {
         success: 'true',
         total: 3,
     });
+});
+
+app.get('/api/v1/test', async (req, res) => {
+    let response = null;
+    await easyvk({
+        // client_id: vkClientId,
+        // client_secret: vkSecretKey,
+        token: vkServiceAccessKey,
+    }).then(async (vk) => {
+        let vkr = await vk.call('user.get', {
+            user_id: 66919140,
+        });
+
+        console.log(vkr);
+        response = vkr;
+    }, (err) => {
+        response = err;
+    });
+
+    res.send(response);
 });
